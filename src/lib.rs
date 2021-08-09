@@ -92,6 +92,30 @@ impl Map {
         new_map
     }
 
+    fn cleanup_cellular_automata(&self) -> Map {
+        let mut new_map = Map::new(self.height, self.width);
+
+        for i in 0..self.height {
+            for j in 0..self.width {
+                new_map.set(i, j, self.cleanup_cell(i, j));
+            }
+        }
+
+        new_map
+    }
+
+    fn cleanup_cell(&self, y: usize, x: usize) -> bool {
+        let num_neighbours = self.count_neighbours(y, x);
+
+        if num_neighbours >= MIN_NEW_WALL {
+            return true;
+        }
+        if num_neighbours == MIN_KEEP_WALL && self.get(y, x) {
+            return true;
+        }
+        false
+    }
+
     fn calculate_new_cell(&self, y: usize, x: usize) -> bool {
         let num_neighbours = self.count_neighbours(y, x);
 
@@ -253,6 +277,8 @@ impl Map {
             map = map.next_cellular_automata();
         }
 
+        map = map.cleanup_cellular_automata();
+
         map
     }
 }
@@ -409,7 +435,7 @@ mod tests {
 ############
 ###...######
 ##......####
-##.......###
+##......####
 ##......####
 ##.....#####
 ##....######
