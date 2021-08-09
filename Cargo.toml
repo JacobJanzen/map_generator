@@ -1,7 +1,10 @@
 [package]
 name = "map_generator"
+license = "MIT"
 version = "0.1.0"
 edition = "2018"
+description = "Creates randomly generated cave maps."
+authors = ["Jacob Janzen <jacob.a.s.janzen@gmail.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
