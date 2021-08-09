@@ -1,5 +1,9 @@
-use rand::Rng;
+use rand::prelude::*;
+use rand_pcg::Pcg64;
 use std::fmt;
+
+const WALL: char = '#';
+const FLOOR: char = '.';
 
 pub struct Map {
     map: Vec<bool>,
@@ -8,7 +12,7 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn new(height: usize, width: usize) -> Map {
+    fn new(height: usize, width: usize) -> Map {
         Map {
             map: vec![false; width * height],
             width,
@@ -32,7 +36,7 @@ impl Map {
         }
     }
 
-    pub fn next(&self) -> Map {
+    fn next(&self) -> Map {
         let mut new_map = Map::new(self.height, self.width);
 
         for i in 0..self.height {
@@ -88,28 +92,54 @@ impl Map {
         neighbours
     }
 
-    pub fn fill_random(&mut self) {
-        let mut rng = rand::thread_rng();
-
+    fn fill_random<T: Rng>(&mut self, rng: &mut T) {
         for i in 0..self.height {
             for j in 0..self.width {
                 self.set(i, j, rng.gen_bool(0.5));
             }
         }
     }
+
+    pub fn gen_cave_seed(y: usize, x: usize, seed: u64) -> Map {
+        let mut rng = Pcg64::seed_from_u64(seed);
+        Map::gen_cave(y, x, &mut rng)
+    }
+
+    pub fn gen_cave_no_seed(y: usize, x: usize) -> Map {
+        let mut rng = rand::thread_rng();
+        Map::gen_cave(y, x, &mut rng)
+    }
+
+    fn gen_cave<T: Rng>(y: usize, x: usize, rng: &mut T) -> Map {
+        let mut map = Map::new(y, x);
+        map.fill_random(rng);
+        for _ in 0..10 {
+            map = map.next();
+        }
+
+        map
+    }
 }
 
 impl fmt::Display for Map {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+        for _ in 0..self.width + 2 {
+            write!(f, "{}", WALL)?;
+        }
+        writeln!(f)?;
         for i in 0..self.height {
+            write!(f, "{}", WALL)?;
             for j in 0..self.width {
                 if self.get(i, j) {
-                    write!(f, "#")?;
+                    write!(f, "{}", WALL)?;
                 } else {
-                    write!(f, ".")?;
+                    write!(f, "{}", FLOOR)?;
                 }
             }
-            write!(f, "\n")?;
+            writeln!(f, "{}", WALL)?;
+        }
+        for _ in 0..self.width + 2 {
+            write!(f, "{}", WALL)?;
         }
         Ok(())
     }
@@ -230,6 +260,31 @@ mod tests {
     }
 
     #[test]
+    fn generate_map() {
+        let map = Map::gen_cave_seed(10, 10, 0);
+
+        let map_string = format!("{}", map);
+
+        let expected_map_string = String::from(
+            "\
+############
+############
+############
+####..######
+###....#####
+###.....####
+###.....####
+##.....#####
+##....######
+###..#######
+############
+############",
+        );
+
+        assert_eq!(expected_map_string, map_string);
+    }
+
+    #[test]
     fn display() {
         let map = Map::new(5, 5);
 
@@ -237,12 +292,13 @@ mod tests {
 
         let expected_map_string = String::from(
             "\
-.....
-.....
-.....
-.....
-.....
-",
+#######
+#.....#
+#.....#
+#.....#
+#.....#
+#.....#
+#######",
         );
 
         assert_eq!(expected_map_string, map_string);
