@@ -36,7 +36,7 @@ impl Map {
         }
     }
 
-    fn next(&self) -> Map {
+    fn next_cellular_automata(&self) -> Map {
         let mut new_map = Map::new(self.height, self.width);
 
         for i in 0..self.height {
@@ -114,7 +114,7 @@ impl Map {
         let mut map = Map::new(y, x);
         map.fill_random(rng);
         for _ in 0..10 {
-            map = map.next();
+            map = map.next_cellular_automata();
         }
 
         map
