@@ -1,6 +1,8 @@
 use rand::prelude::*;
 use rand_pcg::Pcg64;
+use std::collections::hash_map::DefaultHasher;
 use std::fmt;
+use std::hash::{Hash, Hasher};
 
 const WALL: char = '#';
 const FLOOR: char = '.';
@@ -100,7 +102,17 @@ impl Map {
         }
     }
 
-    pub fn gen_cave_seed(y: usize, x: usize, seed: u64) -> Map {
+    pub fn gen_cave_seed(y: usize, x: usize, seed: String) -> Map {
+        let mut s = DefaultHasher::new();
+
+        let seed: u64 = match seed.trim().parse() {
+            Ok(val) => val,
+            Err(_) => {
+                seed.hash(&mut s);
+                s.finish()
+            }
+        };
+
         let mut rng = Pcg64::seed_from_u64(seed);
         Map::gen_cave(y, x, &mut rng)
     }
@@ -261,7 +273,7 @@ mod tests {
 
     #[test]
     fn generate_map() {
-        let map = Map::gen_cave_seed(10, 10, 0);
+        let map = Map::gen_cave_seed(10, 10, String::from("0"));
 
         let map_string = format!("{}", map);
 
