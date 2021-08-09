@@ -14,7 +14,19 @@ pub struct Map {
 }
 
 impl Map {
-    fn new(height: usize, width: usize) -> Map {
+    /// Create empty map
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use map_generator::Map;
+    ///
+    /// let map = Map::new(100,50);
+    ///
+    /// assert_eq!(100, map.height);
+    /// assert_eq!(50, map.width);
+    /// ```
+    pub fn new(height: usize, width: usize) -> Map {
         Map {
             map: vec![false; width * height],
             width,
@@ -22,6 +34,20 @@ impl Map {
         }
     }
 
+    /// Check if a wall is present at a given position.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use map_generator::Map;
+    ///
+    /// let map = Map::gen_cave_seed(10,10,String::from("0"));
+    /// assert!(map.get(0,0));
+    /// assert!(!map.get(3,2));
+    ///
+    /// // anything outside of the map is a wall
+    /// assert!(map.get(100,100));
+    /// ```
     pub fn get(&self, y: usize, x: usize) -> bool {
         if y >= self.height || x >= self.width {
             // anything outside of the map is a wall
@@ -32,6 +58,19 @@ impl Map {
         self.map[y * self.width + x]
     }
 
+    /// Set the value at a given position in the map
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use map_generator::Map;
+    ///
+    /// let mut map = Map::new(10,10);
+    /// assert!(!map.get(0,0));
+    ///
+    /// map.set(0,0,true);
+    /// assert!(map.get(0,0));
+    /// ```
     pub fn set(&mut self, y: usize, x: usize, new_val: bool) {
         if y < self.height && x < self.width {
             self.map[y * self.width + x] = new_val;
@@ -102,6 +141,17 @@ impl Map {
         }
     }
 
+    /// Creates a cave based on a given seed
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use map_generator::Map;
+    ///
+    /// let map = Map::gen_cave_seed(10,10,String::from("0"));
+    /// assert!(map.get(0,0));
+    /// assert!(!map.get(3,2));
+    /// ```
     pub fn gen_cave_seed(y: usize, x: usize, seed: String) -> Map {
         let mut s = DefaultHasher::new();
 
@@ -117,6 +167,15 @@ impl Map {
         Map::gen_cave(y, x, &mut rng)
     }
 
+    /// Creates a cave without providing a seed
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use map_generator::Map;
+    ///
+    /// let map = Map::gen_cave_no_seed(10,10);
+    /// ```
     pub fn gen_cave_no_seed(y: usize, x: usize) -> Map {
         let mut rng = rand::thread_rng();
         Map::gen_cave(y, x, &mut rng)
