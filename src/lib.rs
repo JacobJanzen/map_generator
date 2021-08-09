@@ -6,6 +6,9 @@ use std::hash::{Hash, Hasher};
 
 const WALL: char = '#';
 const FLOOR: char = '.';
+const INIT_PROBABILITY: f64 = 0.45;
+const MIN_KEEP_WALL: u8 = 4;
+const MIN_NEW_WALL: u8 = 5;
 
 pub struct Map {
     map: Vec<bool>,
@@ -92,14 +95,76 @@ impl Map {
     fn calculate_new_cell(&self, y: usize, x: usize) -> bool {
         let num_neighbours = self.count_neighbours(y, x);
 
-        if num_neighbours >= 5 {
+        if num_neighbours >= MIN_NEW_WALL || self.empty_space(y, x) {
             return true;
         }
-        if num_neighbours == 4 && self.get(y, x) {
+        if num_neighbours == MIN_KEEP_WALL && self.get(y, x) {
             return true;
         }
 
         false
+    }
+
+    fn empty_space(&self, y: usize, x: usize) -> bool {
+        if self.count_far_neighbours(y, x) == 0 {
+            return true;
+        }
+        false
+    }
+
+    fn count_far_neighbours(&self, y: usize, x: usize) -> u8 {
+        let mut total = self.count_neighbours(y, x);
+
+        if x <= 1 || y <= 1 || self.get(y - 2, x - 2) {
+            total += 1;
+        }
+        if x == 0 || y <= 1 || self.get(y - 2, x - 1) {
+            total += 1;
+        }
+        if y <= 1 || self.get(y - 2, x) {
+            total += 1;
+        }
+        if y <= 1 || self.get(y - 2, x + 1) {
+            total += 1;
+        }
+        if y <= 1 || self.get(y - 2, x + 2) {
+            total += 1;
+        }
+        if y == 0 || self.get(y - 1, x + 2) {
+            total += 1;
+        }
+        if self.get(y, x + 2) {
+            total += 1;
+        }
+        if self.get(y + 1, x + 2) {
+            total += 1;
+        }
+        if self.get(y + 2, x + 2) {
+            total += 1;
+        }
+        if self.get(y + 2, x + 1) {
+            total += 1;
+        }
+        if self.get(y + 2, x) {
+            total += 1;
+        }
+        if x == 0 || self.get(y + 2, x - 1) {
+            total += 1;
+        }
+        if x <= 1 || self.get(y + 2, x - 2) {
+            total += 1;
+        }
+        if x <= 1 || self.get(y + 1, x - 2) {
+            total += 1;
+        }
+        if x <= 1 || self.get(y, x - 2) {
+            total += 1;
+        }
+        if x <= 1 || y == 0 || self.get(y - 1, x - 2) {
+            total += 1;
+        }
+
+        total
     }
 
     fn count_neighbours(&self, y: usize, x: usize) -> u8 {
@@ -136,7 +201,7 @@ impl Map {
     fn fill_random<T: Rng>(&mut self, rng: &mut T) {
         for i in 0..self.height {
             for j in 0..self.width {
-                self.set(i, j, rng.gen_bool(0.5));
+                self.set(i, j, rng.gen_bool(INIT_PROBABILITY));
             }
         }
     }
@@ -184,7 +249,7 @@ impl Map {
     fn gen_cave<T: Rng>(y: usize, x: usize, rng: &mut T) -> Map {
         let mut map = Map::new(y, x);
         map.fill_random(rng);
-        for _ in 0..10 {
+        for _ in 0..5 {
             map = map.next_cellular_automata();
         }
 
@@ -335,16 +400,17 @@ mod tests {
         let map = Map::gen_cave_seed(10, 10, String::from("0"));
 
         let map_string = format!("{}", map);
+        println!("{}", map);
 
         let expected_map_string = String::from(
             "\
 ############
 ############
 ############
-####..######
-###....#####
-###.....####
-###.....####
+###...######
+##......####
+##.......###
+##......####
 ##.....#####
 ##....######
 ###..#######
